@@ -119,7 +119,7 @@ plt.show()
 print(generated.size())
 D = Discriminator()
 G = Generator()
-criterion = nn.BCELoss()  # Binary cross entropy: http://pytorch.org/docs/nn.html#bceloss
+criterion = nn.BCEWithLogitsLoss()  # Binary cross entropy: http://pytorch.org/docs/nn.html#bceloss
 d_optimizer = optim.Adam(D.parameters(), lr=d_learning_rate, betas=optim_betas)
 g_optimizer = optim.Adam(G.parameters(), lr=g_learning_rate, betas=optim_betas)
 
@@ -133,7 +133,7 @@ for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(train_loader):
             d_real_data = Variable(images)
             d_real_decision = D(d_real_data)
-            d_real_error = criterion(d_real_decision, Variable(torch.ones(batch_size)))  # ones = true
+            d_real_error = criterion(d_real_decision, Variable(torch.ones(batch_size).unsqueeze(0).t()))  # ones = true
             d_real_error.backward()
             # compute/store gradients, but don't change params
 
@@ -141,7 +141,7 @@ for epoch in range(num_epochs):
             Z=Variable(torch.rand(batch_size)).unsqueeze(0).t()
             d_fake_data = G(Z).detach()  # detach to avoid training G on these labels
             d_fake_decision = D(d_fake_data)
-            d_fake_error = criterion(d_fake_decision, Variable(torch.zeros(batch_size)))  # zeros = fake
+            d_fake_error = criterion(d_fake_decision, Variable(torch.zeros(batch_size).unsqueeze(0).t()))  # zeros = fake
             d_fake_error.backward()
             d_optimizer.step()     # Only optimizes D's parameters; changes based on stored gradients from backward()
 
@@ -151,7 +151,7 @@ for epoch in range(num_epochs):
 
             Z=Variable(torch.rand(batch_size)).unsqueeze(0).t()
             dg_fake_decision = D(G(Z))
-            g_error = criterion(dg_fake_decision, Variable(torch.ones(batch_size)))  # we want to fool, so pretend it's all genuine
+            g_error = criterion(dg_fake_decision, Variable(torch.ones(batch_size).unsqueeze(0).t()))  # we want to fool, so pretend it's all genuine
 
             g_error.backward()
             g_optimizer.step()  # Only optimizes G's parameters
